@@ -1,157 +1,214 @@
-# pretty-logx
+<div align="center">
 
-A lightweight, beautiful, TypeScript-first logging library for Node.js.
+# ✨ pretty-logx
 
-[![npm version](https://img.shields.io/npm/v/pretty-logx.svg)](https://www.npmjs.com/package/pretty-logx)
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18-brightgreen)](https://nodejs.org)
+**A lightweight, beautiful, TypeScript-first logging library for Node.js.**  
+*Zero runtime dependencies. Blazing fast. Production-ready structured JSON & pretty dev terminal logs.*
 
-## Features
+[![npm version](https://img.shields.io/npm/v/pretty-logx?color=blue&style=flat-square)](https://www.npmjs.com/package/pretty-logx)
+[![npm bundle size](https://img.shields.io/bundlephobia/minzip/pretty-logx?color=green&style=flat-square)](https://bundlephobia.com/package/pretty-logx)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![Node.js >= 18](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen?style=flat-square)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](https://www.typescriptlang.org)
 
-- 🎨 **Colored terminal output** with timestamps
-- 📊 **6 log levels**: `trace`, `debug`, `info`, `warn`, `error`, `fatal`
-- 🏭 **JSON mode** for structured production logging
-- 🔖 **Namespaces** for tagging log sources
-- 👶 **Child loggers** with inherited bindings
-- 🐛 **Pretty error stack traces**
-- 📦 **Structured logging** with object bindings
-- 🎛️ **Configurable levels and colors**
-- 🚫 **NO_COLOR** and **FORCE_COLOR** support
-- 🔄 **Safe circular reference handling**
-- 📝 **TypeScript-first** with full type inference
-- 📦 **ESM + CommonJS** dual package
-- ⚡ **Zero runtime dependencies**
-- 🟢 **Node.js 18+**
+</div>
 
-## Installation
+---
+
+## ⚡ Highlights
+
+- 🎨 **Beautiful Dev Logs** — Colored output with level badges, timestamps & namespaces
+- 🏭 **Production JSON Mode** — Machine-readable structured logs for Datadog, CloudWatch, Loki, etc.
+- 🚀 **Zero Dependencies** — No bloated node_modules tree. Fast, lightweight, pure Node.js
+- 🛡️ **Circular Safe** — Safely handles complex nested circular object references without crashing
+- 👶 **Context & Child Loggers** — Attach persistent metadata (`requestId`, `userId`) across request lifecycles
+- 💥 **Formatted Stack Traces** — Beautiful, human-readable error trace highlighting
+- 🚫 **Standards Compliant** — Automatic TTY detection with full `NO_COLOR` & `FORCE_COLOR` support
+- 📦 **Dual Module** — Native ESM and CommonJS (`.cjs`) support with complete `.d.ts` types
+
+---
+
+## 📸 Preview
+
+```text
+22:15:02  ◦ TRACE  [database] Connecting to pool...
+22:15:03  ● DEBUG  [auth] Token verified for user: @rudr
+22:15:04  ✓ INFO   [server] HTTP server listening on http://localhost:3000
+22:15:05  ⚠ WARN   [cache] Memory cache nearing 85% capacity
+22:15:06  ✗ ERROR  [payment] Failed processing checkout intent: card_declined
+22:15:07  ✖ FATAL  [cluster] Worker node crashed with exit code 1
+```
+
+---
+
+## 📦 Installation
 
 ```bash
+# npm
 npm install pretty-logx
+
+# pnpm
+pnpm add pretty-logx
+
+# yarn
+yarn add pretty-logx
+
+# bun
+bun add pretty-logx
 ```
 
-## Quick Start
+---
 
-```ts
+## 🚀 Quick Start
+
+### 1. Basic Logging
+
+```typescript
+import { logger } from 'pretty-logx';
+
+logger.info('Hello from pretty-logx!');
+logger.warn('Something looks suspicious');
+logger.error('Failed to connect to database', new Error('ECONNREFUSED'));
+```
+
+### 2. Custom Logger Instance
+
+```typescript
 import { createLogger } from 'pretty-logx';
 
-const log = createLogger({ level: 'debug', namespace: 'app' });
-
-log.info('Server started', { port: 3000 });
-log.debug({ query: 'SELECT * FROM users', duration: '12ms' }, 'DB query');
-log.error({ err: new Error('Connection failed') }, 'Database error');
-```
-
-## API
-
-### `createLogger(config?)`
-
-Creates a new logger instance.
-
-```ts
 const log = createLogger({
-  level: 'info',          // Minimum log level (default: 'info')
-  json: false,            // JSON mode for production (default: false)
-  namespace: 'myapp',     // Optional namespace prefix
-  timestamp: true,        // Include timestamps (default: true)
-  timestampFormat: 'short', // 'iso' | 'short' | 'none' (default: 'short')
-  colors: true,           // Override color auto-detection
-  write: (msg, level) => process.stdout.write(msg + '\n'), // Custom writer
+  level: 'debug',
+  namespace: 'api',
+  timestampFormat: 'short', // 'short' | 'iso' | 'none'
 });
+
+log.debug('Debugging user authentication', { attempt: 1 });
+log.info({ path: '/users', status: 200, latency: '12ms' }, 'Request finished');
 ```
 
-### Log Methods
+---
 
-All log methods accept two calling conventions:
+## 💡 Key Features & Recipes
 
-```ts
-// Message only
-log.info('Hello world');
+### 1. Child Loggers (Request Tracing)
 
-// Message + extra data
-log.info('Request complete', { status: 200 });
+Create scoped child loggers that inherit parent configurations and persist metadata like `requestId`, `tenantId`, or `serviceName`:
 
-// Bindings object first (recommended for structured logging)
-log.info({ requestId: 'abc', userId: 42 }, 'User logged in');
+```typescript
+import { createLogger } from 'pretty-logx';
 
-// Error logging
-log.error({ err: new Error('oops') }, 'Something failed');
-log.error('Request failed', new Error('Timeout'));
-```
+const rootLogger = createLogger({ namespace: 'backend' });
 
-Available methods: `trace`, `debug`, `info`, `warn`, `error`, `fatal`
+// Express/Fastify middleware context
+function handleRequest(req, res) {
+  const reqLog = rootLogger.child({
+    requestId: req.headers['x-request-id'] || 'req-9874',
+    ip: req.ip,
+  });
 
-### Level Predicates
-
-```ts
-if (log.isDebugEnabled) {
-  log.debug('Expensive debug info', computeDebugInfo());
+  reqLog.info('Incoming HTTP Request');
+  // ... downstream
+  reqLog.info('Request processed successfully');
 }
 ```
 
-Predicates: `isTraceEnabled`, `isDebugEnabled`, `isInfoEnabled`, `isWarnEnabled`, `isErrorEnabled`, `isFatalEnabled`
+### 2. Production JSON Logging
 
-### Child Loggers
+Switch to structured, machine-parsable JSON output in production environments:
 
-```ts
-const reqLog = log.child({ requestId: 'req-123' });
-reqLog.info('Processing'); // Includes requestId automatically
+```typescript
+import { createLogger } from 'pretty-logx';
 
-// Override config in child
-const quietChild = log.child({}, { level: 'warn' });
+const log = createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  json: process.env.NODE_ENV === 'production',
+  namespace: 'payment-service',
+});
+
+log.info({ orderId: 'ord_12345', amount: 49.99, currency: 'USD' }, 'Payment captured');
 ```
 
-### JSON Mode (Production)
-
-```ts
-const log = createLogger({ json: true, level: 'info' });
-log.info({ userId: 42 }, 'Login');
-// Output: {"level":"info","levelValue":30,"time":"2024-01-15T12:00:00.000Z","msg":"Login","userId":42}
+**JSON Output:**
+```json
+{
+  "level": "info",
+  "levelValue": 30,
+  "time": "2026-11-23T16:45:00.000Z",
+  "msg": "Payment captured",
+  "namespace": "payment-service",
+  "orderId": "ord_12345",
+  "amount": 49.99,
+  "currency": "USD"
+}
 ```
 
-### Runtime Configuration
+### 3. Safe Handling of Circular References
 
-```ts
-log.level = 'debug';    // Change level
-log.configure({ json: true, level: 'warn' }); // Multiple options at once
+Circular objects are handled safely without throwing `TypeError: Converting circular structure to JSON`:
+
+```typescript
+const circularObj: Record<string, unknown> = { name: 'cyclic' };
+circularObj.self = circularObj;
+
+log.info({ details: circularObj }, 'Circular reference handled safely');
+// => { "name": "cyclic", "self": "[Circular]" }
 ```
 
-### Color Control
+### 4. Level Checking for Expensive Operations
 
-```ts
-import { setColorsEnabled } from 'pretty-logx';
-setColorsEnabled(false); // Disable colors globally
+Avoid computing expensive log payloads if the log level is disabled:
 
-// Or via environment:
-// NO_COLOR=1  → disables colors
-// FORCE_COLOR=1 → enables colors even in non-TTY
+```typescript
+if (log.isDebugEnabled) {
+  const heavyAnalytics = calculateHeavyProfilingMetrics();
+  log.debug({ metrics: heavyAnalytics }, 'Profiling results');
+}
 ```
 
-## Log Levels
+---
 
-| Level   | Value | Use Case                        |
-|---------|-------|---------------------------------|
-| `trace` | 10    | Extremely detailed debugging    |
-| `debug` | 20    | Debug information               |
-| `info`  | 30    | Normal operational messages     |
-| `warn`  | 40    | Warnings, recoverable issues    |
-| `error` | 50    | Errors, failures                |
-| `fatal` | 60    | Critical failures               |
-| `silent`| ∞     | Suppress all output             |
+## 🎛️ Configuration Options
 
-## TypeScript
+| Option | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `level` | `LogLevelName` | `'info'` | Minimum log level (`trace`, `debug`, `info`, `warn`, `error`, `fatal`, `silent`) |
+| `json` | `boolean` | `false` | When `true`, outputs ndjson formatted logs |
+| `namespace` | `string` | `undefined` | Prefix tag for your logs (e.g. `[auth]`, `[worker]`) |
+| `timestamp` | `boolean` | `true` | Whether to display timestamps |
+| `timestampFormat` | `'short' \| 'iso' \| 'none'` | `'short'` | Format of the timestamp (`HH:MM:SS.mmm` or ISO 8601) |
+| `colors` | `boolean` | `auto` | Force-enable or disable terminal colorization |
+| `write` | `(output, level) => void` | `console/stream` | Custom writer function |
 
-Full TypeScript support with strict types:
+---
 
-```ts
-import type { LoggerConfig, LogLevelName, LogRecord } from 'pretty-logx';
-```
+## 📊 Log Levels
 
-## CommonJS Support
+| Level | Severity | Terminal Badge | Default Destination |
+| :--- | :---: | :---: | :--- |
+| `trace` | 10 | `◦ TRACE` | `stdout` |
+| `debug` | 20 | `● DEBUG` | `stdout` |
+| `info` | 30 | `✓ INFO ` | `stdout` |
+| `warn` | 40 | `⚠ WARN ` | `stdout` |
+| `error` | 50 | `✗ ERROR` | `stderr` |
+| `fatal` | 60 | `✖ FATAL` | `stderr` |
+| `silent`| ∞ | *(hidden)* | *(none)* |
 
-```js
-const { createLogger } = require('pretty-logx');
-```
+---
 
-## License
+## 🏷️ Standards & Environment Flags
 
-[MIT](LICENSE) © 2024
+- **`NO_COLOR`**: Set `NO_COLOR=1` to disable terminal ANSI color escapes ([no-color.org](https://no-color.org)).
+- **`FORCE_COLOR`**: Set `FORCE_COLOR=1` to force color output in CI or non-TTY environments.
+
+---
+
+## 🤝 Contributing
+
+Contributions, issues, and feature requests are welcome!  
+Feel free to open an issue or pull request.
+
+---
+
+## 📄 License
+
+Distributed under the [MIT](LICENSE) License. © 2026 Rudransh & contributors.

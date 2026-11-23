@@ -12,15 +12,15 @@
     "json",
     "node"
   ],
-  "author": "",
+  "author": "Rudransh",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/your-username/pretty-logx.git"
+    "url": "git+https://github.com/ray-rudr/pretty-logx.git"
   },
-  "homepage": "https://github.com/your-username/pretty-logx#readme",
+  "homepage": "https://github.com/ray-rudr/pretty-logx#readme",
   "bugs": {
-    "url": "https://github.com/your-username/pretty-logx/issues"
+    "url": "https://github.com/ray-rudr/pretty-logx/issues"
   },
   "engines": {
     "node": ">=18.0.0"
