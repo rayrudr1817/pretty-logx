@@ -16,11 +16,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ray-rudr/pretty-logx.git"
+    "url": "git+https://github.com/rayrudr1817/pretty-logx.git"
   },
-  "homepage": "https://github.com/ray-rudr/pretty-logx#readme",
+  "homepage": "https://github.com/rayrudr1817/pretty-logx#readme",
   "bugs": {
-    "url": "https://github.com/ray-rudr/pretty-logx/issues"
+    "url": "https://github.com/rayrudr1817/pretty-logx/issues"
   },
   "engines": {
     "node": ">=18.0.0"
